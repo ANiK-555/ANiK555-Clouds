@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import os
 import re
 import uuid
+from aiohttp import web
 from motor.motor_asyncio import AsyncIOMotorClient
 from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -16,6 +18,9 @@ from config import (
 
 logging.basicConfig(format="%(asctime)s — %(levelname)s — %(message)s", level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
+PORT = int(os.environ.get("PORT", 8080))
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "").rstrip("/")
 
 _client = AsyncIOMotorClient(DB_URI)
 _db = _client[DB_NAME]
@@ -697,7 +702,7 @@ async def post_init(app):
     ])
 
 
-def main():
+async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).build()
 
     app.add_handler(CommandHandler("start", start_handler))
@@ -719,11 +724,49 @@ def main():
         filters.Document.ALL | filters.VIDEO | filters.AUDIO | filters.PHOTO,
         file_handler,
     ))
-
     app.add_error_handler(error_handler)
-    print(f"🌩️ {BOT_NAME} running...")
-    app.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
+
+    async def webhook_handler(request):
+        data = await request.json()
+        update = Update.de_json(data, app.bot)
+        await app.update_queue.put(update)
+        return web.Response(text="ok")
+
+    async def health_handler(request):
+        return web.Response(text="ok")
+
+    await app.initialize()
+
+    if WEBHOOK_URL:
+        await app.bot.set_webhook(
+            url=f"{WEBHOOK_URL}/webhook",
+            allowed_updates=Update.ALL_TYPES,
+            drop_pending_updates=True,
+        )
+        logging.info(f"Webhook set: {WEBHOOK_URL}/webhook")
+    else:
+        logging.warning("WEBHOOK_URL not set — webhook not registered with Telegram")
+
+    await app.start()
+
+    aio_app = web.Application()
+    aio_app.router.add_post("/webhook", webhook_handler)
+    aio_app.router.add_get("/health", health_handler)
+    aio_app.router.add_get("/", health_handler)
+
+    runner = web.AppRunner(aio_app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    await site.start()
+
+    print(f"🌩️ {BOT_NAME} running on port {PORT}")
+
+    try:
+        await asyncio.Event().wait()
+    finally:
+        await app.stop()
+        await runner.cleanup()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
