@@ -21,15 +21,15 @@ FSUB_PHOTO = os.environ.get("FSUB_PHOTO", "")
 
 DEFAULT_MESSAGES = {
     "START": (
-        "☁️ <b>Welcome to NexDrop!</b>\n\n"
+        "☁️ <b>Welcome to ANiK555 DL!</b>\n\n"
         "📦 Get your files via secure links\n"
         "⚡ Fast & auto-cleaned delivery\n"
         "🔒 Protected access\n\n"
-        "<i>Made by Taz • @tazchatbot</i>"
+        "<i>Donate me here @ANiK555</i>"
     ),
     "FSUB": (
         "🔒 <b>Access Denied, {first}!</b>\n\n"
-        "You must join our channel(s) to receive files.\n\n"
+        "You must join my channel's to get the files.\n\n"
         "👇 Join below then tap <b>Try Again</b>."
     ),
     "FILE_CAPTION": (
