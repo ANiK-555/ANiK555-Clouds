@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: nexdrop-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 main.py
+    envVars:
+      - key: WEBHOOK_URL
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: BOT_NAME
+        sync: false
+      - key: OWNER_ID
+        sync: false
+      - key: DB_URI
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_CHANNEL
+        sync: false
+      - key: AUTO_DEL
+        sync: false
+      - key: CHANNEL_URL
+        sync: false
+      - key: CHANNEL_BTN
+        sync: false
+      - key: START_PHOTO
+        sync: false
+      - key: FSUB_PHOTO
+        sync: false
